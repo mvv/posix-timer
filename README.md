@@ -6,5 +6,5 @@ that are missing from `System.Posix.Time`.
 Installation
 ------------
 The usual:
-$ `cabal install`
+	$ cabal install
 
