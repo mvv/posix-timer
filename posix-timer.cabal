@@ -1,5 +1,5 @@
 Name: posix-timer
-Version: 0.0.1
+Version: 0.0.2
 Category: System
 Stability: experimental
 Synopsis: Bindings to POSIX clock and timer functions.
