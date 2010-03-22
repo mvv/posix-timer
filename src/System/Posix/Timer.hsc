@@ -30,7 +30,7 @@ module System.Posix.Timer (
     configureTimer,
     timerTimeLeft,
     timerOverrunCnt,
-    deleteTimer
+    destroyTimer
   ) where
 
 import Data.Int
@@ -243,8 +243,8 @@ timerOverrunCnt timer =
   throwErrnoIfMinus1 "timerOverrunCnt" $ c_timer_getoverrun timer
 
 -- | Destroy the timer. See /timer_delete(3)/.
-deleteTimer :: Timer -> IO ()
-deleteTimer timer = throwErrnoIfMinus1_ "deleteTimer" $ c_timer_delete timer
+destroyTimer :: Timer -> IO ()
+destroyTimer timer = throwErrnoIfMinus1_ "deleteTimer" $ c_timer_delete timer
 
 foreign import ccall unsafe "clock_getcpuclockid"
   c_clock_getcpuclockid :: ProcessID -> Ptr Clock -> IO CInt
