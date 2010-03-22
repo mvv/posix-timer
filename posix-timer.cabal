@@ -15,8 +15,10 @@ License-File: LICENSE
 Cabal-Version: >= 1.6.0
 Build-Type: Simple
 
+Extra-Source-Files: include/posix-timer.macros.h
+
 Library
-  Build-Depends: base >= 4, unix
+  Build-Depends: base == 4.*, unix
   Extensions: CPP, ForeignFunctionInterface, GeneralizedNewtypeDeriving
   Hs-Source-Dirs: src
   Include-Dirs: include
