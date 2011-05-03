@@ -88,6 +88,8 @@ timeSpecV :: TimeSpec -> (CTime, CULong)
 timeSpecV (TimeSpec s ns) = (s, ns)
 {-# INLINE timeSpecV #-}
 
+-- | The total amount of time a 'TimeSpec' represents,
+--   in nanoseconds.
 timeSpecToNum :: Num a => TimeSpec -> a
 timeSpecToNum = fromInteger . numerator . toRational
 {-# RULES
@@ -95,6 +97,7 @@ timeSpecToNum = fromInteger . numerator . toRational
 "timeSpecToNum/Word64" timeSpecToNum = \x -> fromIntegral (timeSpecToInt64 x)
   #-}
 
+-- | Specialized version of 'timeSpecToNum'.
 timeSpecToInt64 :: TimeSpec -> Int64
 timeSpecToInt64 (TimeSpec s ns) =
   let ns64 = fromIntegral ns in
