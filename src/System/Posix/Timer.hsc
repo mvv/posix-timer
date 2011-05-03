@@ -23,6 +23,8 @@ module System.Posix.Timer (
     timeSpecNanoseconds,
     mkTimeSpec,
     timeSpecV,
+    timeSpecToNum,
+    timeSpecToInt64,
     ITimerSpec(..),
 
     Timer,
@@ -35,6 +37,7 @@ module System.Posix.Timer (
 
 import Data.Int
 import Data.Word
+import Data.Ratio (numerator)
 import Foreign.Storable (Storable(..))
 import Foreign.Ptr (Ptr, WordPtr, nullPtr, castPtr)
 import Foreign.Marshal.Alloc (alloca, allocaBytes)
@@ -44,13 +47,16 @@ import Foreign.C.Error (getErrno, eINTR, throwErrno, throwErrnoIfMinus1,
                         throwErrnoIfMinus1_)
 import System.Posix.Types (ProcessID)
 import System.Posix.Signals (Signal)
+import Unsafe.Coerce (unsafeCoerce)
 
 #include <time.h>
 #include <signal.h>
+#include <HsBaseConfig.h>
 #include <posix-timer.macros.h>
 
 nsPerSecond :: Num a => a
 nsPerSecond = 1000000000
+{-# INLINE nsPerSecond #-}
 
 -- | Mirrors /clockid_t/.
 newtype Clock = Clock #{itype clockid_t} deriving (Eq, Ord, Show, Storable)
@@ -81,6 +87,25 @@ mkTimeSpec seconds nanoseconds =
 timeSpecV :: TimeSpec -> (CTime, CULong)
 timeSpecV (TimeSpec s ns) = (s, ns)
 
+timeSpecToNum :: Num a => TimeSpec -> a
+timeSpecToNum = fromInteger . numerator . toRational
+{-# RULES
+"timeSpecToNum/Int64"  timeSpecToNum = timeSpecToInt64
+"timeSpecToNum/Word64" timeSpecToNum = \x -> fromIntegral (timeSpecToInt64 x)
+  #-}
+
+timeSpecToInt64 :: TimeSpec -> Int64
+timeSpecToInt64 (TimeSpec s ns) =
+  let ns64 = fromIntegral ns in
+#if HTYPE_TIME_T == Int64
+    (unsafeCoerce s :: Int64) * nsPerSecond +
+#elif HTYPE_TIME_T == Int32
+    (fromIntegral (unsafeCoerce s :: Int32) :: Int64) * nsPerSecond +
+#else
+# error FIXME: timeSpecToInt64: unexpected HTYPE_TIME_T
+#endif
+    if s >= 0 then ns64 else -ns64
+
 instance Ord TimeSpec where
   (TimeSpec s1 ns1) `compare` (TimeSpec s2 ns2) = 
     case s1 `compare` s2 of
@@ -109,6 +134,11 @@ instance Num TimeSpec where
     TimeSpec 0 (if s < 0 then -1 else (if s == 0 then 0 else nsPerSecond -1))
   fromInteger i = TimeSpec (fromInteger s) (fromInteger ns)
                     where (s, ns) = i `divMod` nsPerSecond
+
+instance Real TimeSpec where
+  toRational (TimeSpec s ns) =
+    let rns = toRational ns in
+      toRational s * nsPerSecond + if s >= 0 then rns else -rns
 
 #let alignment t = "%lu", (unsigned long) offsetof (struct { char x__; t (y__); }, y__)
 
