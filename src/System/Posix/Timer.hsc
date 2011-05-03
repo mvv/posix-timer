@@ -86,6 +86,7 @@ mkTimeSpec seconds nanoseconds =
 --   Useful as a view pattern.
 timeSpecV :: TimeSpec -> (CTime, CULong)
 timeSpecV (TimeSpec s ns) = (s, ns)
+{-# INLINE timeSpecV #-}
 
 timeSpecToNum :: Num a => TimeSpec -> a
 timeSpecToNum = fromInteger . numerator . toRational
