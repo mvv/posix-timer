@@ -17,6 +17,10 @@ Build-Type: Simple
 
 Extra-Source-Files: include/posix-timer.macros.h
 
+Source-Repository head
+  Type: git
+  Location: https://github.com/mvv/posix-timer.git
+
 Library
   Build-Depends: base < 5, unix
   Hs-Source-Dirs: src
