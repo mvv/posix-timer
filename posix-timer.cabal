@@ -6,6 +6,9 @@ Synopsis: Bindings to POSIX clock and timer functions.
 Description:
   This package provides bindings to POSIX clock and timer functions.
 
+Homepage: https://github.com/mvv/posix-timer
+Bug-Reports: https://github.com/mvv/posix-timer/issues
+
 Author: Mikhail Vorozhtsov <mikhail.vorozhtsov@gmail.com>
 Maintainer: Mikhail Vorozhtsov <mikhail.vorozhtsov@gmail.com>
 Copyright: 2010 Mikhail Vorozhtsov <mikhail.vorozhtsov@gmail.com>
