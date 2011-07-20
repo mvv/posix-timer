@@ -2,6 +2,7 @@
 {-# LANGUAGE CPP #-}
 {-# LANGUAGE ForeignFunctionInterface #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
+{-# LANGUAGE FlexibleContexts #-}
 
 -- | POSIX clocks.
 module System.Posix.Clock (
@@ -31,6 +32,7 @@ import Data.Word
 import Data.Ratio (numerator)
 import Data.List (unfoldr)
 import Control.Applicative ((<$>), (<*>))
+import Control.Monad.Base
 import Foreign.Ptr (Ptr, nullPtr)
 import Foreign.Storable (Storable(..))
 import Foreign.Marshal.Alloc (alloca)
@@ -187,36 +189,37 @@ newtype Clock = Clock #{itype clockid_t} deriving (Eq, Ord, Show, Storable)
 
 -- | Get the CPU-time clock of the given process.
 --   See /clock_getcpuclockid(3)/.
-getProcessClock ∷ ProcessID → IO Clock
+getProcessClock ∷ MonadBase μ IO ⇒ ProcessID → μ Clock
 getProcessClock pid =
-  alloca $ \p → do
+  liftBase $ alloca $ \p → do
     throwErrnoIfMinus1_ "getProcClock" $ c_clock_getcpuclockid pid p
     peek p
 
 -- | Get the clock resolution. See /clock_getres(3)/.
-getClockResolution ∷ Clock → IO TimeSpec
+getClockResolution ∷ MonadBase μ IO ⇒ Clock → μ TimeSpec
 getClockResolution clock =
-  alloca $ \p → do
+  liftBase $ alloca $ \p → do
     throwErrnoIfMinus1_ "getClockResolution" $ c_clock_getres clock p
     peek p
 
 -- | Get the clock time. See /clock_gettime(3)/.
-getClockTime ∷ Clock → IO TimeSpec
+getClockTime ∷ MonadBase μ IO ⇒ Clock → μ TimeSpec
 getClockTime clock =
-  alloca $ \p → do
+  liftBase $ alloca $ \p → do
     throwErrnoIfMinus1_ "getClockTime" $ c_clock_gettime clock p
     peek p
 
 -- | Set the clock time. See /clock_settime(3)/.
-setClockTime ∷ Clock → TimeSpec → IO ()
+setClockTime ∷ MonadBase μ IO ⇒ Clock → TimeSpec → μ ()
 setClockTime clock ts =
-  with ts $ throwErrnoIfMinus1_ "setClockTime" . c_clock_settime clock
+  liftBase $ with ts $
+    throwErrnoIfMinus1_ "setClockTime" . c_clock_settime clock
 
 -- | Sleep for the specified duration. When interrupted by a signal, returns
 --   the amount of time left to sleep. See /clock_nanosleep(3)/.
-clockSleep ∷ Clock → TimeSpec → IO TimeSpec
+clockSleep ∷ MonadBase μ IO ⇒ Clock → TimeSpec → μ TimeSpec
 clockSleep clock ts =
-  with ts $ \pTs →
+  liftBase $ with ts $ \pTs →
     alloca $ \pLeft → do 
       result ← c_clock_nanosleep clock 0 pTs pLeft
       if result == 0
@@ -229,9 +232,9 @@ clockSleep clock ts =
 
 -- | Sleep until the clock time reaches the specified value.
 --   See /clock_nanosleep(3)/.
-clockSleepAbs ∷ Clock → TimeSpec → IO ()
+clockSleepAbs ∷ MonadBase μ IO ⇒ Clock → TimeSpec → μ ()
 clockSleepAbs clock ts =
-  with ts $ \p →
+  liftBase $ with ts $ \p →
     throwErrnoIfMinus1_ "clockSleepAbs" $
       c_clock_nanosleep clock #{const TIMER_ABSTIME} p nullPtr
 

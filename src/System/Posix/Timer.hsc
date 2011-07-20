@@ -2,6 +2,7 @@
 {-# LANGUAGE CPP #-}
 {-# LANGUAGE ForeignFunctionInterface #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
+{-# LANGUAGE FlexibleContexts #-}
 
 -- | POSIX timers.
 module System.Posix.Timer (
@@ -16,6 +17,7 @@ module System.Posix.Timer (
 
 import Data.Word
 import Control.Applicative ((<$>), (<*>))
+import Control.Monad.Base
 import Foreign.Storable (Storable(..))
 import Foreign.Ptr (Ptr, WordPtr, nullPtr, castPtr)
 import Foreign.Marshal.Alloc (alloca, allocaBytes)
@@ -49,13 +51,14 @@ instance Storable ITimerSpec where
 newtype Timer = Timer #{itype timer_t} deriving (Eq, Ord, Show, Storable)
 
 -- | Create a timer. See /timer_create(3)/.
-createTimer ∷ Clock
+createTimer ∷ MonadBase μ IO
+            ⇒ Clock
             → Maybe (Signal, WordPtr) -- ^ Optional signal to raise on timer
-                                       --   expirations and value of
-                                       --   /siginfo.si_value/.
-            → IO Timer
-createTimer clock sigEvent = do
-  alloca $ \pTimer → do
+                                      --   expirations and value of
+                                      --   /siginfo.si_value/.
+            → μ Timer
+createTimer clock sigEvent =
+  liftBase $ alloca $ \pTimer → do
     throwErrnoIfMinus1_ "createTimer" $
       case sigEvent of
         Just (signal, ud) → do
@@ -70,13 +73,14 @@ createTimer clock sigEvent = do
     peek pTimer
 
 -- | Setup the timer. See /timer_settime(3)/.
-configureTimer ∷ Timer
+configureTimer ∷ MonadBase μ IO
+               ⇒ Timer
                → Bool -- ^ Whether the expiration time is absolute.
                → TimeSpec -- ^ Expiration time. Zero value disarms the timer.
                → TimeSpec -- ^ Interval between subsequent expirations.
-               → IO (TimeSpec, TimeSpec)
+               → μ (TimeSpec, TimeSpec)
 configureTimer timer absolute value interval =
-  with (ITimerSpec interval value) $ \pNew →
+  liftBase $ with (ITimerSpec interval value) $ \pNew →
     alloca $ \pOld → do
       throwErrnoIfMinus1_ "configureTimer" $
         c_timer_settime timer
@@ -86,21 +90,22 @@ configureTimer timer absolute value interval =
 
 -- | Get the amount of time left until the next expiration and the interval
 --   between the subsequent expirations. See /timer_gettime(3)/.
-timerTimeLeft ∷ Timer → IO (TimeSpec, TimeSpec)
+timerTimeLeft ∷ MonadBase μ IO ⇒ Timer → μ (TimeSpec, TimeSpec)
 timerTimeLeft timer =
-  alloca $ \p → do
+  liftBase $ alloca $ \p → do
     throwErrnoIfMinus1_ "timerTimeLeft" $ c_timer_gettime timer p
     ITimerSpec interval value ← peek p
     return (value, interval)
 
 -- | Get the timer overrun count. See /timer_getoverrun(3)/.
-timerOverrunCnt ∷ Timer → IO CInt
+timerOverrunCnt ∷ MonadBase μ IO ⇒ Timer → μ CInt
 timerOverrunCnt timer =
-  throwErrnoIfMinus1 "timerOverrunCnt" $ c_timer_getoverrun timer
+  liftBase $ throwErrnoIfMinus1 "timerOverrunCnt" $ c_timer_getoverrun timer
 
 -- | Destroy the timer. See /timer_delete(3)/.
-destroyTimer ∷ Timer → IO ()
-destroyTimer timer = throwErrnoIfMinus1_ "deleteTimer" $ c_timer_delete timer
+destroyTimer ∷ MonadBase μ IO ⇒ Timer → μ ()
+destroyTimer timer =
+  liftBase $ throwErrnoIfMinus1_ "deleteTimer" $ c_timer_delete timer
 
 foreign import ccall unsafe "timer_create"
   c_timer_create ∷ Clock → Ptr () → Ptr Timer → IO CInt
