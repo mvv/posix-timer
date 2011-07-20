@@ -246,6 +246,6 @@ foreign import ccall unsafe "clock_gettime"
   c_clock_gettime ∷ Clock → Ptr TimeSpec → IO CInt
 foreign import ccall unsafe "clock_settime"
   c_clock_settime ∷ Clock → Ptr TimeSpec → IO CInt
-foreign import ccall unsafe "clock_nanosleep"
+foreign import ccall "clock_nanosleep"
   c_clock_nanosleep ∷ Clock → CInt → Ptr TimeSpec → Ptr TimeSpec → IO CInt
 
