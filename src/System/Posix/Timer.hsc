@@ -25,7 +25,7 @@ import Foreign.Marshal.Utils (with)
 import Foreign.C.Types (CInt)
 import Foreign.C.Error (throwErrnoIfMinus1, throwErrnoIfMinus1_)
 import System.Posix.Signals (Signal)
-import System.Posix.Clock (TimeSpec, Clock)
+import System.Posix.Clock (TimeSpec, Clock(..))
 
 #include <time.h>
 #include <signal.h>
