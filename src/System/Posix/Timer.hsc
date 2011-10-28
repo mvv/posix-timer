@@ -22,7 +22,11 @@ import Foreign.Storable (Storable(..))
 import Foreign.Ptr (Ptr, WordPtr, nullPtr, castPtr)
 import Foreign.Marshal.Alloc (alloca, allocaBytes)
 import Foreign.Marshal.Utils (with)
+#if __GLASGOW_HASKELL__ >= 703
+import Foreign.C.Types (CInt(..))
+#else
 import Foreign.C.Types (CInt)
+#endif
 import Foreign.C.Error (throwErrnoIfMinus1, throwErrnoIfMinus1_)
 import System.Posix.Signals (Signal)
 import System.Posix.Clock (TimeSpec, Clock(..))

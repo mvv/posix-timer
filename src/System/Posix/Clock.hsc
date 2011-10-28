@@ -37,10 +37,20 @@ import Foreign.Ptr (Ptr, nullPtr)
 import Foreign.Storable (Storable(..))
 import Foreign.Marshal.Alloc (alloca)
 import Foreign.Marshal.Utils (with)
-import Foreign.C.Types (CInt, CULong, CTime)
+import Foreign.C.Types (CULong)
+#if __GLASGOW_HASKELL__ >= 703
+import Foreign.C.Types (CInt(..), CTime(..))
+#else
+import Foreign.C.Types (CInt, CTime)
+#endif
 import Foreign.C.Error (getErrno, eINTR, throwErrno, throwErrnoIfMinus1_)
+#if __GLASGOW_HASKELL__ >= 703
+import System.Posix.Types (CPid(..))
+#endif
 import System.Posix.Types (ProcessID)
+#if __GLASGOW_HASKELL__ < 703
 import Unsafe.Coerce (unsafeCoerce)
+#endif
 
 #include <time.h>
 #include <HsBaseConfig.h>
@@ -120,7 +130,11 @@ instance Enum TimeSpec where
         then error "TimeSpec.fromEnum"
         else fromIntegral s' * nsPerSecond + fromIntegral ns
     where s', minSecs, maxSecs ∷ #{itype time_t}
+#if __GLASGOW_HASKELL__ >= 703
+          CTime s' = s
+#else
           s' = unsafeCoerce s
+#endif
           minSecs = fromIntegral minSecsInInt
           maxSecs = fromIntegral maxSecsInInt
           minNs, maxNs ∷ CULong
@@ -153,12 +167,17 @@ instance Integral TimeSpec where
 
 timeSpecToInt64 ∷ TimeSpec → Int64
 timeSpecToInt64 (TimeSpec s ns) =
-#if HTYPE_TIME_T == Int64
-  (unsafeCoerce s ∷ Int64) * nsPerSecond +
-#elif HTYPE_TIME_T == Int32
-  (fromIntegral (unsafeCoerce s ∷ Int32) ∷ Int64) * nsPerSecond +
+#if __GLASGOW_HASKELL__ >= 703
+  let CTime s' = s in
+  fromIntegral s' * nsPerSecond +
 #else
-# error FIXME: timeSpecToInt64: unexpected HTYPE_TIME_T value
+# if HTYPE_TIME_T == Int64
+  (unsafeCoerce s ∷ Int64) * nsPerSecond +
+# elif HTYPE_TIME_T == Int32
+  (fromIntegral (unsafeCoerce s ∷ Int32) ∷ Int64) * nsPerSecond +
+# else
+#  error FIXME: timeSpecToInt64: unexpected HTYPE_TIME_T value
+# endif
 #endif
   fromIntegral ns
 {-# INLINE timeSpecToInt64 #-}
