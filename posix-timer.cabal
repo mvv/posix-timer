@@ -25,7 +25,7 @@ Source-Repository head
   Location: https://github.com/mvv/posix-timer.git
 
 Library
-  Build-Depends: base < 5, unix, transformers-base
+  Build-Depends: base < 5, unix, transformers-base >= 0.3
   Hs-Source-Dirs: src
   Include-Dirs: include
   GHC-Options: -Wall

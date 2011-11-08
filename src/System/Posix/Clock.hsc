@@ -208,35 +208,35 @@ newtype Clock = Clock #{itype clockid_t} deriving (Eq, Ord, Show, Storable)
 
 -- | Get the CPU-time clock of the given process.
 --   See /clock_getcpuclockid(3)/.
-getProcessClock ∷ MonadBase μ IO ⇒ ProcessID → μ Clock
+getProcessClock ∷ MonadBase IO μ ⇒ ProcessID → μ Clock
 getProcessClock pid =
   liftBase $ alloca $ \p → do
     throwErrnoIfMinus1_ "getProcClock" $ c_clock_getcpuclockid pid p
     peek p
 
 -- | Get the clock resolution. See /clock_getres(3)/.
-getClockResolution ∷ MonadBase μ IO ⇒ Clock → μ TimeSpec
+getClockResolution ∷ MonadBase IO μ ⇒ Clock → μ TimeSpec
 getClockResolution clock =
   liftBase $ alloca $ \p → do
     throwErrnoIfMinus1_ "getClockResolution" $ c_clock_getres clock p
     peek p
 
 -- | Get the clock time. See /clock_gettime(3)/.
-getClockTime ∷ MonadBase μ IO ⇒ Clock → μ TimeSpec
+getClockTime ∷ MonadBase IO μ ⇒ Clock → μ TimeSpec
 getClockTime clock =
   liftBase $ alloca $ \p → do
     throwErrnoIfMinus1_ "getClockTime" $ c_clock_gettime clock p
     peek p
 
 -- | Set the clock time. See /clock_settime(3)/.
-setClockTime ∷ MonadBase μ IO ⇒ Clock → TimeSpec → μ ()
+setClockTime ∷ MonadBase IO μ ⇒ Clock → TimeSpec → μ ()
 setClockTime clock ts =
   liftBase $ with ts $
     throwErrnoIfMinus1_ "setClockTime" . c_clock_settime clock
 
 -- | Sleep for the specified duration. When interrupted by a signal, returns
 --   the amount of time left to sleep. See /clock_nanosleep(3)/.
-clockSleep ∷ MonadBase μ IO ⇒ Clock → TimeSpec → μ TimeSpec
+clockSleep ∷ MonadBase IO μ ⇒ Clock → TimeSpec → μ TimeSpec
 clockSleep clock ts =
   liftBase $ with ts $ \pTs →
     alloca $ \pLeft → do 
@@ -251,7 +251,7 @@ clockSleep clock ts =
 
 -- | Sleep until the clock time reaches the specified value.
 --   See /clock_nanosleep(3)/.
-clockSleepAbs ∷ MonadBase μ IO ⇒ Clock → TimeSpec → μ ()
+clockSleepAbs ∷ MonadBase IO μ ⇒ Clock → TimeSpec → μ ()
 clockSleepAbs clock ts =
   liftBase $ with ts $ \p →
     throwErrnoIfMinus1_ "clockSleepAbs" $

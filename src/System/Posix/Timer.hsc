@@ -55,7 +55,7 @@ instance Storable ITimerSpec where
 newtype Timer = Timer #{itype timer_t} deriving (Eq, Ord, Show, Storable)
 
 -- | Create a timer. See /timer_create(3)/.
-createTimer ∷ MonadBase μ IO
+createTimer ∷ MonadBase IO μ
             ⇒ Clock
             → Maybe (Signal, WordPtr) -- ^ Optional signal to raise on timer
                                       --   expirations and value of
@@ -77,7 +77,7 @@ createTimer clock sigEvent =
     peek pTimer
 
 -- | Setup the timer. See /timer_settime(3)/.
-configureTimer ∷ MonadBase μ IO
+configureTimer ∷ MonadBase IO μ
                ⇒ Timer
                → Bool -- ^ Whether the expiration time is absolute.
                → TimeSpec -- ^ Expiration time. Zero value disarms the timer.
@@ -94,7 +94,7 @@ configureTimer timer absolute value interval =
 
 -- | Get the amount of time left until the next expiration and the interval
 --   between the subsequent expirations. See /timer_gettime(3)/.
-timerTimeLeft ∷ MonadBase μ IO ⇒ Timer → μ (TimeSpec, TimeSpec)
+timerTimeLeft ∷ MonadBase IO μ ⇒ Timer → μ (TimeSpec, TimeSpec)
 timerTimeLeft timer =
   liftBase $ alloca $ \p → do
     throwErrnoIfMinus1_ "timerTimeLeft" $ c_timer_gettime timer p
@@ -102,12 +102,12 @@ timerTimeLeft timer =
     return (value, interval)
 
 -- | Get the timer overrun count. See /timer_getoverrun(3)/.
-timerOverrunCnt ∷ MonadBase μ IO ⇒ Timer → μ CInt
+timerOverrunCnt ∷ MonadBase IO μ ⇒ Timer → μ CInt
 timerOverrunCnt timer =
   liftBase $ throwErrnoIfMinus1 "timerOverrunCnt" $ c_timer_getoverrun timer
 
 -- | Destroy the timer. See /timer_delete(3)/.
-destroyTimer ∷ MonadBase μ IO ⇒ Timer → μ ()
+destroyTimer ∷ MonadBase IO μ ⇒ Timer → μ ()
 destroyTimer timer =
   liftBase $ throwErrnoIfMinus1_ "deleteTimer" $ c_timer_delete timer
 
