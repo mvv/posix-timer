@@ -55,6 +55,7 @@ import Unsafe.Coerce (unsafeCoerce)
 #include <time.h>
 #include <HsBaseConfig.h>
 #include <posix-timer.macros.h>
+#include <stdio.h>
 
 #let alignment t = "%lu", (unsigned long) offsetof (struct { char x__; t (y__); }, y__)
 
