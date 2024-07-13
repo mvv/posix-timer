@@ -34,6 +34,7 @@ import System.Posix.Clock (TimeSpec, Clock(..))
 #include <time.h>
 #include <signal.h>
 #include <posix-timer.macros.h>
+#include <stdio.h>
 
 #let alignment t = "%lu", (unsigned long) offsetof (struct { char x__; t (y__); }, y__)
 
