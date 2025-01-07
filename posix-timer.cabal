@@ -32,6 +32,7 @@ Source-Repository head
   Location: https://github.com/mvv/posix-timer.git
 
 Library
+  Default-Language: Haskell2010
   Build-Depends: base < 5, unix, transformers-base >= 0.3
   Hs-Source-Dirs: src
   Include-Dirs: include
